@@ -5,6 +5,8 @@
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clojure.java-time "0.3.2"]
+                 [org.clojure/data.xml "0.0.8"]
+                 [org.clojure/data.zip "1.0.0"]
                  [cprop "0.1.17"]
                  [expound "0.8.9"]
                  [funcool/struct "1.4.0"]
@@ -30,14 +32,14 @@
                  [selmer "1.12.33"]]
 
   :min-lein-version "2.0.0"
-  
+
   :source-paths ["src/clj"]
   :test-paths ["test/clj"]
   :resource-paths ["resources"]
   :target-path "target/%s/"
   :main ^:skip-aot a40kc-web.core
 
-  :plugins [] 
+  :plugins []
 
   :profiles
   {:uberjar {:omit-source true
@@ -55,8 +57,8 @@
                                  [ring/ring-devel "1.9.1"]
                                  [ring/ring-mock "0.4.0"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.24.1"]
-                                 [jonase/eastwood "0.3.5"]] 
-                  
+                                 [jonase/eastwood "0.3.5"]]
+
                   :source-paths ["env/dev/clj" ]
                   :resource-paths ["env/dev/resources"]
                   :repl-options {:init-ns user
