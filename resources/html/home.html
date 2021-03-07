@@ -12,17 +12,60 @@
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
-    Attacker:
-    <p>
-        {{ attacker }}
-    </p>
-    Defender:
-    <p>
-        {{ defender }}
-    </p>
-    Results:
-    <p>
-        {{ results }}
-    </p>
-  </div>
+
+    <ul>
+    {% for model in attacker-models %}
+    <li> {{model.name}} </li>
+    <p> {{model.chars}}</p>
+    <p> {{model.weapons}}</p>
+    {% endfor %}
+    </ul>
+
+    <ul>
+      {% for unit in attacker-units %}
+      <li> {{unit.name}} </li>
+      <ul>
+      {% for model in unit.models %}
+      <li> {{model.name}} </li>
+      <p> {{model.chars}}</p>
+      <p> {{model.weapons}}</p>
+      {% endfor %}
+      </ul>
+      {% endfor %}
+    </ul>
+
+    <ul>
+      {% for unit in defender-units %}
+      <li> {{unit.name}} </li>
+      {% endfor %}
+    </ul>
+
+
+    <select class="form-select" aria-label="Default select example">
+      {% for model in attacker-models %}
+      <option value={{model.name}}>{{model.name}}</option>
+      {% endfor %}
+    </select>
+
+
+    <select class="form-select" aria-label="Default select example">
+      {% for unit in attacker-units %}
+      <option value={{unit.name}}>{{unit.name}}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Attacker: -->
+    <!-- <p> -->
+    <!--     {{ attacker }} -->
+    <!-- </p> -->
+    <!-- Defender: -->
+    <!-- <p> -->
+    <!--     {{ defender }} -->
+    <!-- </p> -->
+    <!-- Results: -->
+    <!-- <p> -->
+    <!--     {{ results }} -->
+    <!-- </p> -->
+
+</div>
 {% endblock %}

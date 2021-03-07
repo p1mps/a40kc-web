@@ -70,17 +70,17 @@
 (defn d6-odds [n]
   (double (/ (- 7 n) 6)))
 
-(defn parse-char [char]
+(defn parse-char [char field]
+  (println "parse char" char field)
   (try
-
     (Integer/parseInt
      (str (clojure.string/replace char "+" "")))
-
     (catch Exception e
-      (read-string char))))
+      (when char (read-string char)))))
 
 (defn hit-probs [u]
-  (-> u :chars :bs parse-char d6-odds))
+  (println u)
+  (-> u :chars :bs (parse-char "bs hit probs") d6-odds))
 
 ;;woundRatio = targetToughness / weaponStrength;
 (defn odds-wounding [S T]
@@ -88,12 +88,12 @@
     (d6-odds (- 4 comparison))))
 
 (defn wound-probs [w u]
-  (let [strength (-> w :chars :s parse-char)
-        toughess (-> u :chars :t parse-char)]
+  (let [strength (-> w :chars :s (parse-char "strength wounds"))
+        toughess (-> u :chars :t (parse-char "toughness wounds"))]
     (odds-wounding strength toughess)))
 
 (defn save-prob [u w]
-  (-> u :chars :s parse-char (- (:ap (:chars w)))  d6-odds))
+  (-> u :chars :s (parse-char "strength") (- (:ap (:chars w)))  d6-odds))
 
 
 (def fight
