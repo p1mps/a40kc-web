@@ -1,8 +1,10 @@
 (ns a40kc-web.server.parse
   (:require
+   [clojure.data.zip.xml :as zx]
    [a40kc-web.server.xml-select :as xml-select]
    [a40kc-web.server.zip-reader :as zip-reader]))
 
+;; TODO: remove Game type from parsed
 
 (defn attrs-name [e]
     (:name (:attrs e)))
@@ -76,6 +78,15 @@
                                :chars   (characteristics  m)
                                :weapons (weapons m)})})}))
 
+(defn assoc-ids [units]
+  (loop [u units
+         id 0
+         result []]
+    (if (seq u)
+      (recur (rest u) (inc id) (conj result (assoc (first u) :id id)))
+      result)))
+
+
 (defn file->edn [file]
   (-> file
       zip-reader/zipper
@@ -90,7 +101,12 @@
 
 (comment
 
-  (parse "spacemarines.rosz")
+  (->
+
+   (mapcat :units (parse "spacemarines.rosz"))
+   (assoc-ids)
+
+   )
 
 
   (unzip-file "spacemarines.rosz" "spacemarines.ros")

@@ -8,6 +8,9 @@
    [ring.util.response]
    [ring.util.http-response :as response]))
 
+(def state (atom {}))
+
+
 (defn home-page [request]
   (layout/render request "home.html" {:docs (-> "docs/docs.md" io/resource slurp)}))
 
@@ -54,6 +57,8 @@
 
 (defn roasters [request]
   (let [[attacker defender] (load-rosters request)]
+    (swap! state assoc :attacker attacker)
+    (swap! state assoc :defender attacker)
     (layout/render request "home.html"
                    {:attacker-units (:units attacker)
                     :attacker-models (:models attacker)
