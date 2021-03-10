@@ -1,71 +1,78 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="content">
-    <form action="." method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="exampleFormControlFile1">Attacker</label>
-            <input type="file" class="form-control-file" id="attacker" name="attacker">
+    <div class="container">
+
+        <div class="row">
+            <form action="." method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Attacker</label>
+                    <input type="file" class="form-control-file" id="attacker" name="attacker">
+                </div>
+                <div class="form-group">
+                    <label>Defender</label>
+                    <input type="file" class="form-control-file" id="defender" name="defender">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="exampleFormControlFile1">Defender</label>
-            <input type="file" class="form-control-file" id="defender" name="defender">
+
+        <!--
+             <ul>
+             {% for unit in attacker-units %}
+             <li> {{unit.name}} </li>
+             {% endfor %}
+             <ul>
+
+
+             <ul>
+             {% for unit in defender-units %}
+             <li> {{unit.name}} </li>
+             {% endfor %}
+             </ul>
+        -->
+
+
+
+
+        <div class="row">
+            <form action="/fight" method="POST">
+                <div class="form-group">
+                    <select class="form-select" aria-label="Default
+                                                            select
+                                                            example" name="attacker">
+                        {% for unit in attacker-units %}
+                        <option value={{unit.id}}>{{unit.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <select class="form-select" aria-label="Default
+                        select example" name="defender">
+                        {% for unit in defender-units %}
+                        <option value={{unit.id}}>{{unit.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Fight</button>
+            </form>
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-
-    <ul>
-    {% for model in attacker-models %}
-    <li> {{model.name}} </li>
-    <p> {{model.chars}}</p>
-    <p> {{model.weapons}}</p>
-    {% endfor %}
-    </ul>
-
-    <ul>
-      {% for unit in attacker-units %}
-      <li> {{unit.name}} </li>
-      <ul>
-      {% for model in unit.models %}
-      <li> {{model.name}} </li>
-      <p> {{model.chars}}</p>
-      <p> {{model.weapons}}</p>
-      {% endfor %}
-      </ul>
-      {% endfor %}
-    </ul>
-
-    <ul>
-      {% for unit in defender-units %}
-      <li> {{unit.name}} </li>
-      {% endfor %}
-    </ul>
 
 
-    <select class="form-select" aria-label="Default select example">
-      {% for model in attacker-models %}
-      <option value={{model.name}}>{{model.name}}</option>
-      {% endfor %}
-    </select>
 
-
-    <select class="form-select" aria-label="Default select example">
-      {% for unit in attacker-units %}
-      <option value={{unit.name}}>{{unit.name}}</option>
-      {% endfor %}
-    </select>
-
-    <!-- Attacker: -->
-    <!-- <p> -->
-    <!--     {{ attacker }} -->
-    <!-- </p> -->
-    <!-- Defender: -->
-    <!-- <p> -->
-    <!--     {{ defender }} -->
-    <!-- </p> -->
-    <!-- Results: -->
-    <!-- <p> -->
-    <!--     {{ results }} -->
-    <!-- </p> -->
-
+        Attacker:
+        <p>
+            {{ attacker }}
+        </p>
+        Defender:
+        <p>
+            {{ defender }}
+        </p>
+        <!-- Results: -->
+        <!-- <p> -->
+        <!--     {{ results }} -->
+        <!-- </p> -->
+    </div>
 </div>
 {% endblock %}

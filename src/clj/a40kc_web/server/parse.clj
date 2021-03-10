@@ -59,24 +59,22 @@
      (map #(attrs-and-content (first %)) chars)
      (keywordize-chars))))
 
-
-(defn edn [forces]
-  (for [f forces]
-    {:force-name (attrs-name  (first f))
-     :models (for [m (xml-select/models f)]
+(defn get-models [force]
+  (for [m (xml-select/models force)]
                {:name    (attrs-name (first m))
                 :number  (read-string (:number (:attrs (first m))))
                 :chars   (characteristics  m)
-                :weapons (weapons m)})
+                :weapons (weapons m)}))
 
-     :units      (for [u (xml-select/units f)]
-                   {:name
-                    (attrs-name (first u))
-                    :models (for [m (xml-select/unit->models u)]
-                              {:name    (attrs-name (first m))
-                               :number  (read-string (:number (:attrs (first m))))
-                               :chars   (characteristics  m)
-                               :weapons (weapons m)})})}))
+(defn get-units [force]
+  (for [u (xml-select/units force)]
+    {:name
+     (attrs-name (first u))
+     :models (for [m (xml-select/unit->models u)]
+               {:name    (attrs-name (first m))
+                :number  (read-string (:number (:attrs (first m))))
+                :chars   (characteristics  m)
+                :weapons (weapons m)})}))
 
 (defn assoc-ids [units]
   (loop [u units
@@ -85,6 +83,14 @@
     (if (seq u)
       (recur (rest u) (inc id) (conj result (assoc (first u) :id id)))
       result)))
+
+
+(defn edn [forces]
+  (for [f forces]
+    {:force-name (attrs-name  (first f))
+     :units (assoc-ids (concat (get-models f) (get-units f)))}))
+
+
 
 
 (defn file->edn [file]
@@ -97,7 +103,7 @@
 (defn parse [file-rosz]
   ;; TODO: generate random xml name file
   (let [file (zip-reader/unzip-file file-rosz "output.xml")]
-    (file->edn file)))
+    (first (file->edn file))))
 
 (comment
 

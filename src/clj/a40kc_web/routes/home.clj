@@ -20,21 +20,14 @@
 
 (defn load-rosters [request]
   (let [attacker-tmp (get-in request [:params :attacker :tempfile])
-        ;;defender-tmp (get-in request [:params :defender :tempfile])
-
-        ]
+        defender-tmp (get-in request [:params :defender :tempfile])]
     (when (and attacker-tmp
-               ;;defender-tmp
-
-               )
+               defender-tmp)
       (let [attacker-path (.getAbsolutePath (:tempfile (:attacker (:params request))))
-            ;;defender-path (.getAbsolutePath (:tempfile (:attacker (:params request))))
+            defender-path (.getAbsolutePath (:tempfile (:defender (:params request))))]
 
-            ]
-        (vec (parse/parse attacker-path))
-        ;;(vec (parse/parse defender-path))
-
-        ))))
+        [(parse/parse attacker-path)
+         (parse/parse defender-path)]))))
 
 
 ;; (defn calculate [request]
@@ -57,16 +50,20 @@
 
 (defn roasters [request]
   (let [[attacker defender] (load-rosters request)]
-    (swap! state assoc :attacker attacker)
-    (swap! state assoc :defender attacker)
+    (when (and attacker defender)
+      (swap! state assoc :attacker attacker)
+      (swap! state assoc :defender defender))
     (layout/render request "home.html"
-                   {:attacker-units (:units attacker)
-                    :attacker-models (:models attacker)
-                    ;;:defender-units (:units defender)
+                   {:attacker-units (:units (:attacker @state))
+                    :defender-units (:units (:defender @state))})))
 
-
-                    })))
-
+(defn fight [request]
+  (let [attacker-id (get-in request [:params :attacker])
+        defender-id (get-in request [:params :defender])
+        attacker-unit (vec (filter #(= (str (:id %)) attacker-id) (:units (:attacker @state))))]
+    (layout/render request "home.html"
+                   {:attacker attacker-unit
+                    :defender defender-id})))
 
 
 
@@ -75,4 +72,5 @@
    {:middleware [middleware/wrap-formats
                  middleware/wrap-base]}
    ["/" {:get home-page
-         :post roasters}]])
+         :post roasters}]
+   ["/fight" {:post fight}]])
