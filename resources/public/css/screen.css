@@ -33,3 +33,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.input-unit-stats {
+    width: 30px;
+}
+
+.group {
+    margin-top: 10px;
+}

@@ -1,21 +1,36 @@
 (ns a40kc-web.routes.home
   (:require
    [a40kc-web.layout :as layout]
-   [clojure.java.io :as io]
    [a40kc-web.middleware :as middleware]
    [a40kc-web.server.parse :as parse]
    [a40kc-web.server.fight :as fight]
-   [ring.util.response]
-   [ring.util.http-response :as response]))
+   [ring.util.response]))
 
-(def state (atom {}))
+(def state
+  (atom
+   {:attacker {:units nil
+               :models nil}
+    :defender {:units nil
+               :models nil}
+    ;; after select
+    :attacker-unit nil
+    :defender-unit nil
+    :attacker-model nil
+    :defender-model nil}))
 
 
 (defn home-page [request]
-  (layout/render request "home.html" {:docs (-> "docs/docs.md" io/resource slurp)}))
-
-(defn about-page [request]
- (layout/render request "about.html"))
+  (println "attacker")
+  (println (:attacker @state))
+  (layout/render request "home.html"
+                   {:attacker-models (:models (:attacker @state))
+                    :defender-models (:models (:defender @state))
+                    :attacker-units (:units (:attacker @state))
+                    :defender-units (:units (:defender @state))
+                    :attacker-unit (:attacker-unit @state)
+                    :defender-unit (:defender-unit @state)
+                    :attacker-model (:attacker-model @state)
+                    :defender-model (:defender-model @state)}))
 
 
 (defn load-rosters [request]
@@ -30,40 +45,52 @@
          (parse/parse defender-path)]))))
 
 
-;; (defn calculate [request]
-;;   (let [attacker-tmp (get-in request [:params :attacker :tempfile])
-;;         defender-tmp (get-in request [:params :defender :tempfile])]
-;;     (when (and attacker-tmp defender-tmp)
-;;       (let [attacker-path (.getAbsolutePath (:tempfile (:attacker (:params request))))
-;;             defender-path (.getAbsolutePath (:tempfile (:attacker (:params request))))]
-;;         (layout/render request "home.html" {:attacker (vec (parse/parse attacker-path))
-;;                                             :defender (vec (parse/parse defender-path))
-
-;;                                             :results
-;;                                             (vec
-;;                                              (fight/fight
-;;                                               (parse/parse attacker-path)
-;;                                               (parse/parse defender-path)))})
-;;         ))))
-
-
-
 (defn roasters [request]
   (let [[attacker defender] (load-rosters request)]
     (when (and attacker defender)
       (swap! state assoc :attacker attacker)
       (swap! state assoc :defender defender))
-    (layout/render request "home.html"
-                   {:attacker-units (:units (:attacker @state))
-                    :defender-units (:units (:defender @state))})))
+    (home-page request)))
 
-(defn fight [request]
-  (let [attacker-id (get-in request [:params :attacker])
-        defender-id (get-in request [:params :defender])
-        attacker-unit (vec (filter #(= (str (:id %)) attacker-id) (:units (:attacker @state))))]
-    (layout/render request "home.html"
-                   {:attacker attacker-unit
-                    :defender defender-id})))
+(defn parse-id [id]
+  (if (clojure.string/includes? id "unit")
+    {:unit true
+     :id (clojure.string/replace id #"unit-" "")}
+    {:unit false
+     :id (clojure.string/replace id #"model-" "")}))
+
+
+(defn select [request]
+  ;; TODO: parse unit model ids
+  (let [attacker-id (parse-id (get-in request [:params :attacker]))
+        defender-id (parse-id (get-in request [:params :defender]))]
+    (if (:unit attacker-id)
+      (do
+        (swap! state assoc :attacker-unit (first (filter #(= (str (:id %)) (:id attacker-id)) (:units (:attacker @state)))))
+        (swap! state assoc :attacker-model nil))
+      (do
+        (swap! state assoc :attacker-model (first (filter #(= (str (:id %)) (:id attacker-id)) (:models (:attacker @state)))))
+        (swap! state assoc :attacker-unit nil))
+
+
+      )
+    (if (:unit defender-id)
+      (do
+        (swap! state assoc :defender-unit (first (filter #(= (str (:id %)) (:id defender-id)) (:units (:defender @state)))))
+        (swap! state assoc :defender-model nil)
+
+
+
+        )
+      (do
+        (swap! state assoc :defender-model (first (filter #(= (str (:id %)) (:id defender-id)) (:models (:defender @state)))))
+        (swap! state assoc :defender-unit nil))
+
+
+      )
+
+
+    (home-page request)))
 
 
 
@@ -73,4 +100,4 @@
                  middleware/wrap-base]}
    ["/" {:get home-page
          :post roasters}]
-   ["/fight" {:post fight}]])
+   ["/select" {:post select}]])

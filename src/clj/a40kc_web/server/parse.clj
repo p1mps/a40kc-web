@@ -23,10 +23,7 @@
   (reduce (fn [result value]
             (let [[characteristic v]  value
                   c (keywordize characteristic)]
-              (when v
-                (if (clojure.string/includes? v "+")
-                  (assoc result c (read-string (clojure.string/replace v "+" "")))
-                  (assoc result c (read-string v))))))
+              (assoc result c v)))
           {}
           chars))
 
@@ -66,16 +63,6 @@
                 :chars   (characteristics  m)
                 :weapons (weapons m)}))
 
-(defn get-units [force]
-  (for [u (xml-select/units force)]
-    {:name
-     (attrs-name (first u))
-     :models (for [m (xml-select/unit->models u)]
-               {:name    (attrs-name (first m))
-                :number  (read-string (:number (:attrs (first m))))
-                :chars   (characteristics  m)
-                :weapons (weapons m)})}))
-
 (defn assoc-ids [units]
   (loop [u units
          id 0
@@ -84,11 +71,22 @@
       (recur (rest u) (inc id) (conj result (assoc (first u) :id id)))
       result)))
 
+(defn get-units [force]
+  (for [u (xml-select/units force)]
+    {:name
+     (attrs-name (first u))
+     :models (for [m (xml-select/unit->models u)]
+               {:name    (attrs-name (first m))
+                :number  (read-string (:number (:attrs (first m))))
+                :chars   (characteristics  m)
+                :weapons (assoc-ids (weapons m))})}))
+
 
 (defn edn [forces]
   (for [f forces]
     {:force-name (attrs-name  (first f))
-     :units (assoc-ids (concat (get-models f) (get-units f)))}))
+     :models (assoc-ids (get-models f))
+     :units (assoc-ids (get-units f))}))
 
 
 

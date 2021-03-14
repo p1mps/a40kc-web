@@ -1,69 +1,100 @@
-(ns a40kc-web.server.fight)
+(ns a40kc-web.server.fight
+  (:require
+    [clojure.string :as string]))
 
-(def spacemarines
-  {:name "Tactical Squad",
-    :models
-    (list {:name "Space Marine",
-      :number 4,
-      :chars {:ws "3+"
-              :ld 7
-              :w 2
-              :m "6\""
-              :save "3+"
-              :s 4
-              :bs "3+"
-              :t 4
-              :a 1},
-      :weapons
-      [{:name "Boltgun",
-        :chars
-        {:range "24\"",
-         :type "Rapid Fire 1",
-         :s 4,
-         :ap 0,
-         :d 1,
-         :abilities -}}
-       {:name "Frag grenades",
-        :chars
-        {:range "6\"",
-         :type "Grenade D6",
-         :s 3,
-         :ap 0,
-         :d 1,
-         :abilities "Blast."}}
-       {:name "Krak grenades",
-        :chars
-        {:range "6\"",
-         :type "Grenade 1",
-         :s 6,
-         :ap -1,
-         :d "D3",
-         :abilities -}}
-       {:name "Bolt pistol",
-        :chars
-        {:range "12\"",
-         :type "Pistol 1",
-         :s 4,
-         :ap 0,
-         :d 1,
-         :abilities -}}]})})
+(def number-experiments 100)
 
-(def conscripts
-  {:name "Conscripts",
-   :models
-   (list {:name   "Conscript",
-     :number 20,
-     :chars
-     {:ws 5, :ld 4, :w 1, :m 6, :save 5, :s 3, :bs 5, :t 3, :a 1},
-     :weapons
-     [{:name "Lasgun",
-       :chars
-       {:range     24,
-        :type      "Rapid",
-        :s         3,
-        :ap        0,
-        :d         1,
-        :abilities -}}]})})
+;; TODO roll d3
+(defn roll []
+  (let [roll (rand-nth (range 1 7))]
+
+    roll))
+
+
+(defn bs [unit]
+  (read-string (string/replace (:bs (:chars unit)) "+" "")))
+
+(defn strength [weapon]
+  (read-string (:s (:chars weapon))))
+
+
+(defn toughness [unit]
+  (read-string (:t (:chars unit))))
+
+
+(defn success? [roll stat]
+  (>= roll stat))
+
+(defn hit? [char]
+  (success? (roll) char))
+
+(defn to-wound [weapon target-unit]
+  (let [comparison (- (strength weapon) (toughness target-unit))]
+    (- 4 comparison)))
+
+(defn wound? [weapon target-unit]
+  (success? (roll) (to-wound weapon target-unit)))
+
+(defn damage [weapon]
+  (:d (:chars weapon)))
+
+
+(defn parse-damage [damage]
+  (when (string/includes? "d" damage)
+    (let [[times dice] (string/split #"d" damage)]
+      (if times
+        {:times times
+         :dice dice}
+        {:times 1
+         :dice dice}))))
+
+(defn roll-damage [damage]
+  (let [parsed-damage (parse-damage damage)]
+    (reduce + (for [t (:times parsed-damage)] (roll)))))
+
+
+(defn shoot [unit1 unit2]
+  (println "shooting with" (:name unit1))
+  (for [w (:weapons unit1)]
+    (do
+      (println "shooting with " (:name w))
+      (let [bs      (bs unit1)
+            _       (println "bs:" bs)
+            hit     (hit? bs)
+            _       (if hit (println "hit!") (println "no hit!"))
+            _       (println "s:" (strength w))
+            _       (println "t:" (toughness unit1))
+            wounded (wound? w unit2)
+            _       (if wounded (println "wound!") (println "no wound!"))
+            ]
+
+        (when (and hit wounded) 1)
+        )))
+
+  )
+
+
+
+
+
+
+
+
+(comment
+
+  (def units (:units (a40kc-web.server.parse/parse "spacemarines.rosz")))
+
+  (def captain (first units))
+
+  (get-in captain [:chars])
+  (bs captain)
+
+  (shoot captain captain)
+
+
+
+)
+
 
 
 
