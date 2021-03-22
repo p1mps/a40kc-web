@@ -98,8 +98,9 @@
   (clojure.pprint/pprint request)
   (let [params (:params request)
         model-1 {:chars {:bs (:bs params)
-                      :t "4"}
-               :weapons [{:chars {:s "20"
+                         :t "4"}
+                 :weapons [{:name "weapon"
+                            :chars {:s "20"
                                   :ap "-"
                                   :d "1"}}]}
         model-2 {:chars {:t "2"
@@ -108,6 +109,7 @@
         ]
     (println "STATS!")
     (println stats)
+    (println (first (vals (first stats))))
     (swap! state assoc :result-fight (json/generate-string (first (vals (first stats)))))
     (home-page request))
   )

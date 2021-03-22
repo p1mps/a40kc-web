@@ -37,10 +37,16 @@
     <!-- scripts -->
       <script type="text/javascript">
        var layout = {
-           title: 'Responsive to window\'s size!',
-
            width: 500,
-           height: 500
+           height: 500,
+           xaxis: {
+
+               tickformat: ",d" // For more formatting types, see: https://github.com/d3/d3-format/blob/master/README.md#locale_format
+           },
+           yaxis: {
+               'visible': false,
+               tickformat: ",d" // For more formatting types, see: https://github.com/d3/d3-format/blob/master/README.md#locale_format
+           }
        };
 
        var config = {responsive: true}
@@ -52,6 +58,7 @@
            type: 'histogram',
        };
        var data = [trace];
+       console.log(data);
        Plotly.newPlot('tester', data, layout, config);
 
 

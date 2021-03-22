@@ -13,15 +13,18 @@
 (defn roll-dice [dice]
   (rand-nth (range 1 (+ 1 dice))))
 
+
 (defn roll
   ;; TODO handle 3D6+2
   ([dice]
-   (when (string/includes? dice "D")
-     (let [[times dice] (string/split dice #"D")
-           dice         (Integer/parseInt dice)]
-       (if (seq times)
-         (reduce + (take (Integer/parseInt times) (repeatedly (partial roll-dice dice))))
-         (roll-dice dice))))))
+   (if (= dice "1")
+     1
+     (when (string/includes? dice "D")
+       (let [[times dice] (string/split dice #"D")
+             dice         (Integer/parseInt dice)]
+         (if (seq times)
+           (reduce + (take (Integer/parseInt times) (repeatedly (partial roll-dice dice))))
+           (roll-dice dice)))))))
 
 
 (defn bs [unit]
@@ -64,8 +67,9 @@
      :weapon-chars (:chars w)
      :wounds      (if (and (hit? (bs model1)) (not (save? (save model2))) (wound? w model2))
                     (let [damage (damage w)]
-                      (if damage
-                        (roll damage) 1))
+                      (if (and damage (not (string/includes? damage "D")))
+                        (roll damage)
+                        1))
                     0)}))
 
 (defn monte-carlo-shoot [model1 model2 n]
@@ -86,9 +90,10 @@
 
   )
 
+
 (defn stats [unit1 unit2]
   (for [m (:models unit1)]
-    (monte-carlo-shoot m (first (:models unit2)) 10)
+    (monte-carlo-shoot m (first (:models unit2)) 1000)
 
     )
 

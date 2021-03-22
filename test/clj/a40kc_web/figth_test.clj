@@ -47,6 +47,34 @@
       (is (= (list {:weapon-name "bolter", :weapon-chars {:s "4" :d "D6"}, :wounds 5})
              (fight/shoot multi-damage-shooter target)))
 
+      (is (= {"bolter" (list 1 1)} (fight/monte-carlo-shoot shooter target 2)))
+
+      (is (= {"bolter" (list 5 5)} (fight/monte-carlo-shoot multi-damage-shooter target 2)))
+
+      ))
+
+  (testing "no wounds"
+    (with-redefs [fight/roll-dice (fn [dice] 1)]
+
+      (is (= {"bolter" (list 0 0)} (fight/monte-carlo-shoot shooter target 2)))
+
+      (is (= {"bolter" (list 0 0)} (fight/monte-carlo-shoot multi-damage-shooter target 2)))
 
       ))
   )
+
+
+
+(def model-1 {:chars {:bs "2+"
+                         :t "4"}
+              :weapons [{:name "weapon"
+                         :chars {:s "20"
+                                  :ap "-"
+                                  :d "1"}}]})
+
+
+(def model-2 {:chars {:t "2"
+                      :save "3+"}})
+
+
+(fight/stats {:models [model-1]} {:models [model-2]})
