@@ -2,13 +2,26 @@
   (:require
     [clojure.string :as string]))
 
+
 (def number-experiments 100)
 
-;; TODO roll d3
-(defn roll []
-  (let [roll (rand-nth (range 1 7))]
 
-    roll))
+;; TODO: handle grenades (either shoot or grenade)
+
+;; TODO roll d3
+
+(defn roll-dice [dice]
+  (rand-nth (range 1 (+ 1 dice))))
+
+(defn roll
+  ;; TODO handle 3D6+2
+  ([dice]
+   (when (string/includes? dice "D")
+     (let [[times dice] (string/split dice #"D")
+           dice         (Integer/parseInt dice)]
+       (if (seq times)
+         (reduce + (take (Integer/parseInt times) (repeatedly (partial roll-dice dice))))
+         (roll-dice dice))))))
 
 
 (defn bs [unit]
@@ -26,50 +39,60 @@
   (>= roll stat))
 
 (defn hit? [char]
-  (success? (roll) char))
+  (success? (roll-dice 6) char))
 
 (defn to-wound [weapon target-unit]
   (let [comparison (- (strength weapon) (toughness target-unit))]
     (- 4 comparison)))
 
 (defn wound? [weapon target-unit]
-  (success? (roll) (to-wound weapon target-unit)))
+  (success? (roll-dice 6) (to-wound weapon target-unit)))
+
+(defn save? [armor-save]
+  (success? (roll-dice 6) armor-save))
 
 (defn damage [weapon]
   (:d (:chars weapon)))
 
+(defn save [model]
+  (read-string (string/replace (:save (:chars model)) "+" "")))
 
-(defn parse-damage [damage]
-  (when (string/includes? "d" damage)
-    (let [[times dice] (string/split #"d" damage)]
-      (if times
-        {:times times
-         :dice dice}
-        {:times 1
-         :dice dice}))))
+;; TODO: number of attacks * number of units
+(defn shoot [model1 model2]
+  (for [w (:weapons model1)]
+    {:weapon-name (:name w)
+     :weapon-chars (:chars w)
+     :wounds      (if (and (hit? (bs model1)) (not (save? (save model2))) (wound? w model2))
+                    (let [damage (damage w)]
+                      (if damage
+                        (roll damage) 1))
+                    0)}))
 
-(defn roll-damage [damage]
-  (let [parsed-damage (parse-damage damage)]
-    (reduce + (for [t (:times parsed-damage)] (roll)))))
+(defn monte-carlo-shoot [model1 model2 n]
+  (->>
+   (let [shooting (flatten (repeatedly n #(shoot model1 model2)))]
+       (loop [result {}
+              s      shooting]
+         (if-not (seq s)
+           result
+           (recur (update result (:weapon-name (first s))
+                          conj (:wounds (first s))) (rest s)))))
+   (reduce (fn [result value]
+             (assoc result (first value) (second value))
+
+             )
+
+           {}))
+
+  )
+
+(defn stats [unit1 unit2]
+  (for [m (:models unit1)]
+    (monte-carlo-shoot m (first (:models unit2)) 10)
+
+    )
 
 
-(defn shoot [unit1 unit2]
-  (println "shooting with" (:name unit1))
-  (for [w (:weapons unit1)]
-    (do
-      (println "shooting with " (:name w))
-      (let [bs      (bs unit1)
-            _       (println "bs:" bs)
-            hit     (hit? bs)
-            _       (if hit (println "hit!") (println "no hit!"))
-            _       (println "s:" (strength w))
-            _       (println "t:" (toughness unit1))
-            wounded (wound? w unit2)
-            _       (if wounded (println "wound!") (println "no wound!"))
-            ]
-
-        (when (and hit wounded) 1)
-        )))
 
   )
 
@@ -83,13 +106,21 @@
 (comment
 
   (def units (:units (a40kc-web.server.parse/parse "spacemarines.rosz")))
-
   (def captain (first units))
+
+  (def captain-model (first (:models captain)))
+
+  (shoot captain-model captain-model)
+
+  (monte-carlo-shoot captain-model captain-model 100)
+
+  (:weapons )
+
 
   (get-in captain [:chars])
   (bs captain)
 
-  (shoot captain captain)
+  (stats captain captain)
 
 
 

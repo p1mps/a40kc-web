@@ -5,6 +5,8 @@
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [clojure.java-time "0.3.2"]
+                 [cheshire "5.10.0"]
+                 [com.fasterxml.jackson.core/jackson-core "2.12.2"]
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/data.zip "1.0.0"]
                  [cprop "0.1.17"]

@@ -56,13 +56,6 @@
      (map #(attrs-and-content (first %)) chars)
      (keywordize-chars))))
 
-(defn get-models [force]
-  (for [m (xml-select/models force)]
-               {:name    (attrs-name (first m))
-                :number  (read-string (:number (:attrs (first m))))
-                :chars   (characteristics  m)
-                :weapons (weapons m)}))
-
 (defn assoc-ids [units]
   (loop [u units
          id 0
@@ -71,6 +64,14 @@
       (recur (rest u) (inc id) (conj result (assoc (first u) :id id)))
       result)))
 
+(defn get-models [force]
+  (for [m (xml-select/models force)]
+    {:name    (attrs-name (first m))
+     :models
+     (list {:number  (read-string (:number (:attrs (first m))))
+            :chars   (characteristics  m)
+            :weapons (assoc-ids (weapons m))})}))
+
 (defn get-units [force]
   (for [u (xml-select/units force)]
     {:name
@@ -78,15 +79,14 @@
      :models (for [m (xml-select/unit->models u)]
                {:name    (attrs-name (first m))
                 :number  (read-string (:number (:attrs (first m))))
-                :chars   (characteristics  m)
+                :chars   (characteristics  u)
                 :weapons (assoc-ids (weapons m))})}))
 
 
 (defn edn [forces]
   (for [f forces]
     {:force-name (attrs-name  (first f))
-     :models (assoc-ids (get-models f))
-     :units (assoc-ids (get-units f))}))
+     :units (assoc-ids (concat (get-models f) (get-units f)))}))
 
 
 

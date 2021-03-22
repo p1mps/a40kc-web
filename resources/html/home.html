@@ -1,216 +1,223 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="content">
-    <div class="container">
 
-        <!-- Roster upload -->
-        {% if not attacker-units %}
-        <div class="row">
-            <form action="." method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label>Attacker</label>
-                    <input type="file" class="form-control-file" id="attacker" name="attacker">
-                </div>
-                <div class="form-group">
-                    <label>Defender</label>
-                    <input type="file" class="form-control-file" id="defender" name="defender">
-                </div>
-                <button type="submit" class="btn btn-primary">Upload</button>
-            </form>
-        </div>
-        {% endif %}
+<div class="container">
 
-        <!-- <ul>
-             {% for unit in attacker-units %}
-             <li> {{unit.name}} </li>
-             {% endfor %}
-             <ul>
-
-
-             <ul>
-             {% for unit in defender-units %}
-             <li> {{unit.name}} </li>
-             {% endfor %}
-             </ul>
-
-        -->
-        <!-- Units selector -->
-        {% if attacker-units %}
-        {% if defender-units %}
-
-        <div class="row group">
-            <form action="/select" method="POST">
-                <div class="form-group">
-
-                    <select class="form-select" aria-label="Default
-                                   select
-                                   example" name="attacker">
-
-
-                        {% for unit in attacker-models %}
-
-
-                        {% ifequal attacker-model.id unit.id %}
-                        <option value="model-{{unit.id}}" selected>{{unit.name}}</option>
-                        {% else %}
-                        <option value="model-{{unit.id}}">{{unit.name}}</option>
-                        {% endifequal %}
-                        {% endfor %}
-
-
-                        {% for unit in attacker-units %}
-                        {% ifequal attacker-unit.id unit.id %}
-                        <option value="unit-{{unit.id}}" selected>{{unit.name}}</option>                              {% else %}
-                        <option value="unit-{{unit.id}}">{{unit.name}}</option>
-                        {% endifequal %}
-
-                        {% endfor %}
-
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <select class="form-select" aria-label="Default
-                                   select example" name="defender">
-
-
-                        {% for unit in defender-models %}
-
-
-                        {% ifequal defender-model.id unit.id %}
-                        <option value="model-{{unit.id}}" selected>{{unit.name}}</option>
-                        {% else %}
-                        <option value="model-{{unit.id}}">{{unit.name}}</option>
-                        {% endifequal %}
-                        {% endfor %}
-
-
-                        {% for unit in defender-units %}
-                        {% ifequal defender-unit.id unit.id %}
-                        <option value="unit-{{unit.id}}" selected>{{unit.name}}</option>                              {% else %}
-                        <option value="unit-{{unit.id}}">{{unit.name}}</option>
-                        {% endifequal %}
-
-                        {% endfor %}
-
-
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Select</button>
-            </form>
-        </div>
-        {% endif %}
-        {% endif %}
-
-
-        Attacker:
-        <p>
-            {{ attacker-unit }}
-        </p>
-
-        <p>
-            {{ attacker-model }}
-        </p>
-
-        Defender:
-        <p>
-            {{ defender-unit }}
-        </p>
-
-        <p>
-            {{ defender-model }}
-        </p>
-
-
-        <!-- Fight form -->
-
-
-        {% if attacker %}
-        {% if defender %}
-        <div class="row group">
-
-            <form action="/fight" method="POST">
-
-                {{ attacker.name }}
-
-                <div class="col-sm">
-                    <div class="form-group">
-                        <label> BS: </label>
-                        <input type="text" id="fname" name="fname" value={{attacker.chars.bs}} class="input-unit-stats" maxlength="1">
-                        <label> WS: </label>
-                        <input type="text" id="fname" name="fname" value={{attacker.chars.ws}} class="input-unit-stats">
-                    </div>
-
-                    {% for weapon in attacker.weapons %}
-                    <div class="form-group"
-                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-
-                        <b>{{weapon.name}}</b>
-
-                        <label> attacks: </label>
-                        <input type="text" id="fname" name="fname" value={{attacker.number}} class="input-unit-stats">
-                        <label> strength: </label>
-                        <input type="text" id="fname" name="fname" value={{weapon.chars.s}} class="input-unit-stats">
-                        <label> ap: </label>
-                        <input type="text" id="fname" name="fname" value={{weapon.chars.ap}} class="input-unit-stats">
-                    </div>
-                    {% endfor %}
-
-                    {{ defender.name }}
-
-                    <div class="form-group">
-                        <label> BS: </label>
-                        <input type="text" id="fname" name="fname" value={{defender.chars.bs}} class="input-unit-stats">
-                        <label> WS: </label>
-                        <input type="text" id="fname" name="fname" value={{defender.chars.ws}} class="input-unit-stats">
-                    </div>
-
-                    {% for weapon in defender.weapons %}
-                    <div class="form-group">
-                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-
-                        <b>{{weapon.name}}</b>
-                        <label> attacks: </label>
-                        <input type="text" id="fname" name="fname" value={{defender.number}} class="input-unit-stats">
-                        <label> strength: </label>
-                        <input type="text" id="fname" name="fname" value={{weapon.chars.s}} class="input-unit-stats">
-                        <label> ap: </label>
-                        <input type="text" id="fname" name="fname" value={{weapon.chars.ap}} class="input-unit-stats">
-                    </div>
-
-                    {% endfor %}
-                </div>
-
-                Re roll hits:
-                <select class="form-select" aria-label="Default
-                               select
-                               example" name="attacker">
-                    <option value={{unit.id}}>no</option>
-                    <option value={{unit.id}}>1s</option>
-                    <option value={{unit.id}}>all</option>
-                </select>
-
-                Re roll wounds:
-                <select class="form-select" aria-label="Default
-                               select
-                               example" name="attacker">
-                    <option value={{unit.id}}>no</option>
-                    <option value={{unit.id}}>1s</option>
-                    <option value={{unit.id}}>all</option>
-                </select>
-
-
-                <button type="submit" class="btn btn-primary">Fight</button>
-
-            </form>
-        </div>
-        {% endif %}
-        {% endif %}
-
-        <!-- Results: -->
-        <!-- <p> -->
-        <!--     {{ results }} -->
-        <!-- </p> -->
+    <!-- Roster upload -->
+    {% if not attacker-units %}
+    <div class="row">
+        <form action="." method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Attacker</label>
+                <input type="file" class="form-control-file" id="attacker" name="attacker">
+            </div>
+            <div class="form-group">
+                <label>Defender</label>
+                <input type="file" class="form-control-file" id="defender" name="defender">
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
     </div>
+    {% endif %}
+
+    <!-- <ul>
+         {% for unit in attacker-units %}
+         <li> {{unit.name}} </li>
+         {% endfor %}
+         <ul>
+
+
+         <ul>
+         {% for unit in defender-units %}
+         <li> {{unit.name}} </li>
+         {% endfor %}
+         </ul>
+
+    -->
+    <!-- Units selector -->
+    {% if attacker-units %}
+    {% if defender-units %}
+
+    <div class="row">
+        <div class="col-sm-6">
+            <form action="/select" method="POST">
+                    <div class="form-group">
+
+                            <select class="form-select" aria-label="Default
+                                           select
+                                           example" name="attacker">
+
+
+                                {% for unit in attacker-units %}
+                                {% ifequal attacker-unit.id unit.id %}
+                                <option value="unit-{{unit.id}}" selected>{{unit.name}}</option>                              {% else %}
+                                <option value="unit-{{unit.id}}">{{unit.name}}</option>
+                                {% endifequal %}
+
+                                {% endfor %}
+
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <select class="form-select" aria-label="Default
+                                           select example" name="defender">
+
+
+                                {% for unit in defender-units %}
+                                {% ifequal defender-unit.id unit.id %}
+                                <option value="unit-{{unit.id}}" selected>{{unit.name}}</option>                                     {% else %}
+                                <option value="unit-{{unit.id}}">{{unit.name}}</option>
+                                {% endifequal %}
+
+                                {% endfor %}
+
+
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Select</button>
+            </form>
+        </div>
+        <div class="col-sm-6">
+            <form action="/reset" method="POST">
+                <button type="submit" class="btn btn-primary">Reset</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!--
+         Attacker:
+         <p>
+         {{ attacker-unit }}
+         </p>
+
+
+         Defender:
+         <p>
+         {{ defender-unit }}
+         </p>
+
+    -->
+    <!-- Fight form -->
+
+
+
+    <form action="/fight" method="POST">
+
+        {% if attacker-unit %}
+        <div class="col-sm">
+            {{ attacker-unit.name }}
+        </div>
+        <div class="row">
+            {% for unit in attacker-unit.models %}
+            <div class="col-sm-6">
+                {{ unit.name }}
+
+                <div class="form-group">
+                    <label> BS: </label>
+                    <input type="text" id="fname" name="bs" value={{unit.chars.bs}} class="input-unit-stats" maxlength="1">
+                    <!-- <label> WS: </label>
+                         <input type="text" id="fname" name="ws" value={{unit.chars.ws}} class="input-unit-stats">
+                    -->
+                </div>
+
+                {% for weapon in unit.weapons %}
+
+                <div class="form-group">
+                    <input class="form-check-input" type="checkbox" name="weapon-selected" value={{weapon.id}} id="flexCheckDefault">
+
+                    <b>{{weapon.name}}</b>
+
+                    <label> attacks: </label>
+                    <input type="text" id="fname" name="number" value={{unit.number}} class="input-unit-stats">
+                    <label> strength: </label>
+                    <input type="text" id="fname" name="s" value={{weapon.chars.s}} class="input-unit-stats">
+                    <label> ap: </label>
+                    <input type="text" id="fname" name="ap" value={{weapon.chars.ap}} class="input-unit-stats">
+
+                    <!-- weapon -->
+                </div>
+                <!-- weapons -->
+                {% endfor %}
+
+            </div>
+            <!-- units -->
+            {% endfor %}
+            <!-- row -->
+        </div>
+
+        {% endif %}
+
+
+
+        {% if defender-unit %}
+        <div class="col-sm">
+            {{ defender-unit.name }}
+        </div>
+        <div class="row">
+            {% for unit in defender-unit.models %}
+            <div class="col-sm-6">
+                {{ unit.name }}
+
+                <p>
+                    Toughness {{unit.chars.t}}
+                </p>
+                <p>
+                Save {{unit.chars.s}}
+                </p>
+
+            </div>
+            <!-- units -->
+            {% endfor %}
+            <!-- row -->
+        </div>
+
+
+
+        Re roll hits:
+        <select class="form-select" aria-label="Default
+                       select
+                       example" name="attacker">
+            <option value={{unit.id}}>no</option>
+            <option value={{unit.id}}>1s</option>
+            <option value={{unit.id}}>all</option>
+        </select>
+
+        Re roll wounds:
+        <select class="form-select" aria-label="Default
+                       select
+                       example" name="attacker">
+            <option value={{unit.id}}>no</option>
+            <option value={{unit.id}}>1s</option>
+            <option value={{unit.id}}>all</option>
+        </select>
+
+        Re roll number of shots:
+        <select class="form-select" aria-label="Default
+                       select
+                       example" name="attacker">
+            <option value={{unit.id}}>no</option>
+            <option value={{unit.id}}>yes</option>
+        </select>
+
+
+
+
+        <button type="submit" class="btn btn-primary">Fight</button>
+        {% endif %}
+    </form>
 </div>
+
+
+<!-- Results: -->
+<!-- <p> -->
+<!--     {{ results }} -->
+<!-- </p> -->
+</div>
+
+<div id="tester"></div>
+
+
 {% endblock %}

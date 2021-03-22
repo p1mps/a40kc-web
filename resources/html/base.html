@@ -19,8 +19,11 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
     <!-- Latest compiled and minified JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   </head>
   <body>
 
@@ -32,16 +35,28 @@
       </section>
 
     <!-- scripts -->
-    <script type="text/javascript">
-      (function() {
-        var burger = document.querySelector('.burger');
-        var nav = document.querySelector('#'+burger.dataset.target);
-        burger.addEventListener('click', function(){
-          burger.classList.toggle('is-active');
-          nav.classList.toggle('is-active');
-        });
-      })();
-    </script>
+      <script type="text/javascript">
+       var layout = {
+           title: 'Responsive to window\'s size!',
+
+           width: 500,
+           height: 500
+       };
+
+       var config = {responsive: true}
+
+       var x = {{result-fight}}
+
+       var trace = {
+           x: x,
+           type: 'histogram',
+       };
+       var data = [trace];
+       Plotly.newPlot('tester', data, layout, config);
+
+
+      </script>
+
 
 
     {% block page-scripts %}

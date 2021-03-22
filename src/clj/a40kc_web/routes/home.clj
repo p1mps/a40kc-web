@@ -3,8 +3,9 @@
    [a40kc-web.layout :as layout]
    [a40kc-web.middleware :as middleware]
    [a40kc-web.server.parse :as parse]
+   [cheshire.core :as json]
    [a40kc-web.server.fight :as fight]
-   [ring.util.response]))
+   [ring.util.response :as response]))
 
 (def state
   (atom
@@ -16,12 +17,11 @@
     :attacker-unit nil
     :defender-unit nil
     :attacker-model nil
-    :defender-model nil}))
+    :defender-model nil
+    :result-fight nil}))
 
 
 (defn home-page [request]
-  (println "attacker")
-  (println (:attacker @state))
   (layout/render request "home.html"
                    {:attacker-models (:models (:attacker @state))
                     :defender-models (:models (:defender @state))
@@ -30,7 +30,8 @@
                     :attacker-unit (:attacker-unit @state)
                     :defender-unit (:defender-unit @state)
                     :attacker-model (:attacker-model @state)
-                    :defender-model (:defender-model @state)}))
+                    :defender-model (:defender-model @state)
+                    :result-fight (:result-fight @state)}))
 
 
 (defn load-rosters [request]
@@ -61,7 +62,6 @@
 
 
 (defn select [request]
-  ;; TODO: parse unit model ids
   (let [attacker-id (parse-id (get-in request [:params :attacker]))
         defender-id (parse-id (get-in request [:params :defender]))]
     (if (:unit attacker-id)
@@ -70,28 +70,47 @@
         (swap! state assoc :attacker-model nil))
       (do
         (swap! state assoc :attacker-model (first (filter #(= (str (:id %)) (:id attacker-id)) (:models (:attacker @state)))))
-        (swap! state assoc :attacker-unit nil))
-
-
-      )
+        (swap! state assoc :attacker-unit nil)))
     (if (:unit defender-id)
       (do
         (swap! state assoc :defender-unit (first (filter #(= (str (:id %)) (:id defender-id)) (:units (:defender @state)))))
-        (swap! state assoc :defender-model nil)
-
-
-
-        )
+        (swap! state assoc :defender-model nil))
       (do
         (swap! state assoc :defender-model (first (filter #(= (str (:id %)) (:id defender-id)) (:models (:defender @state)))))
-        (swap! state assoc :defender-unit nil))
-
-
-      )
+        (swap! state assoc :defender-unit nil)))
 
 
     (home-page request)))
 
+(defn reset [request]
+  (reset! state nil)
+  (response/redirect "/" 301))
+
+(defn fight [request]
+  ;; {"bs" "2+",
+  ;; "ws" "2+",
+  ;; "number" ["1" "1" "1" "1"],
+  ;; "s" ["3" "6" "4" "4"],
+  ;; "ap" ["0" "-1" "0" "-1"],
+  ;; "fname"
+  ;; ["2+" "2+" "1" "3" "0" "1" "6" "-1" "1" "4" "0" "1" "4" "-1"],
+  ;; "attacker" ["" "" ""]}
+  (clojure.pprint/pprint request)
+  (let [params (:params request)
+        model-1 {:chars {:bs (:bs params)
+                      :t "4"}
+               :weapons [{:chars {:s "20"
+                                  :ap "-"
+                                  :d "1"}}]}
+        model-2 {:chars {:t "2"
+                         :save "3+"}}
+        stats (fight/stats {:models [model-1]} {:models [model-2]})
+        ]
+    (println "STATS!")
+    (println stats)
+    (swap! state assoc :result-fight (json/generate-string (first (vals (first stats)))))
+    (home-page request))
+  )
 
 
 (defn home-routes []
@@ -100,4 +119,6 @@
                  middleware/wrap-base]}
    ["/" {:get home-page
          :post roasters}]
-   ["/select" {:post select}]])
+   ["/select" {:post select}]
+   ["/fight" {:post fight}]
+   ["/reset" {:post reset}]])
