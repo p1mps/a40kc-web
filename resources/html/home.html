@@ -109,13 +109,16 @@
         {% if attacker-unit %}
         <div class="col-sm">
             {{ attacker-unit.name }}
+            <input type="hidden" name="unit-name" value="{{attacker-unit.name}}"/>
         </div>
         <div class="row">
             {% for unit in attacker-unit.models %}
             <div class="col-sm-6">
-                {{ unit.name }}
+                {{ unit.name }} x {{ unit.number }}
 
                 <div class="form-group">
+                    <input type="hidden" name="model-name" value="{{unit.name}}"/>
+                    <input type="hidden" name="number-weapons" value="{{unit.weapons|count}}"/>
                     <label> BS: </label>
                     <input type="text" id="fname" name="bs" value={{unit.chars.bs}} class="input-unit-stats" maxlength="1">
                     <!-- <label> WS: </label>
@@ -126,10 +129,9 @@
                 {% for weapon in unit.weapons %}
 
                 <div class="form-group">
-                    <input class="form-check-input" type="checkbox" name="weapon-selected" value={{weapon.id}} id="flexCheckDefault">
 
                     <b>{{weapon.name}}</b>
-
+                    <input type="hidden" name="weapon-name" value="{{weapon.name}}"/>
                     <label> attacks: </label>
                     <input type="text" id="fname" name="number" value={{unit.number}} class="input-unit-stats">
                     <label> strength: </label>
