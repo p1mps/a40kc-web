@@ -9,29 +9,29 @@
 
 (def state
   (atom
-   {:attacker {:units nil
-               :models nil}
-    :defender {:units nil
-               :models nil}
+   {:attacker       {:units  nil
+                     :models nil}
+    :defender       {:units  nil
+                     :models nil}
     ;; after select
-    :attacker-unit nil
-    :defender-unit nil
+    :attacker-unit  nil
+    :defender-unit  nil
     :attacker-model nil
     :defender-model nil
-    :result-fight nil}))
+    :result-fight   nil}))
 
 
 (defn home-page [request]
   (layout/render request "home.html"
-                   {:attacker-models (:models (:attacker @state))
-                    :defender-models (:models (:defender @state))
-                    :attacker-units (:units (:attacker @state))
-                    :defender-units (:units (:defender @state))
-                    :attacker-unit (:attacker-unit @state)
-                    :defender-unit (:defender-unit @state)
-                    :attacker-model (:attacker-model @state)
-                    :defender-model (:defender-model @state)
-                    :result-fight (:result-fight @state)}))
+                 {:attacker-models (:models (:attacker @state))
+                  :defender-models (:models (:defender @state))
+                  :attacker-units  (:units (:attacker @state))
+                  :defender-units  (:units (:defender @state))
+                  :attacker-unit   (:attacker-unit @state)
+                  :defender-unit   (:defender-unit @state)
+                  :attacker-model  (:attacker-model @state)
+                  :defender-model  (:defender-model @state)
+                  :result-fight    (:result-fight @state)}))
 
 
 (defn load-rosters [request]
@@ -56,9 +56,9 @@
 (defn parse-id [id]
   (if (clojure.string/includes? id "unit")
     {:unit true
-     :id (clojure.string/replace id #"unit-" "")}
+     :id   (clojure.string/replace id #"unit-" "")}
     {:unit false
-     :id (clojure.string/replace id #"model-" "")}))
+     :id   (clojure.string/replace id #"model-" "")}))
 
 
 (defn select [request]
@@ -86,32 +86,185 @@
   (reset! state nil)
   (response/redirect "/" 301))
 
+
+(defn parse-weapons [{:keys [weapon-name ap s]}]
+  (for [name weapon-name
+        s    s
+        ap   ap]
+    {:name  name
+     :chars {:s  s
+             :ap ap}}))
+
+(defn parse-weapons [weapon-names s ap]
+  (loop [weapon weapon-names
+         s      s
+         ap     ap
+         result []]
+    (if (seq weapon)
+      (recur (rest weapon) (rest s) (rest ap) (conj result {:name  (first weapon)
+                                                            :chars {:s  (first s)
+                                                                    :ap (first ap)}}))
+      result)))
+
+
+
+
+
+(defn single-model [{:keys [model-name bs weapon-name number ap s]}]
+  {:name   model-name
+   :models [{:name model-name
+             :number number
+             :chars {:bs bs}
+             :weapons (parse-weapons weapon-name s ap)}]})
+
+(defn multi-models [{:keys [unit-name model-name bs weapon-name number ap s]}]
+  {:name unit-name
+   :models (loop [model-name  model-name
+                  bs          bs
+                  weapon-name weapon-name
+                  number      number
+                  ap          ap
+                  s           s
+                  result      []]
+             (if (seq model-name)
+               (recur
+                (rest model-name)
+                (rest bs)
+                (rest weapon-name)
+                (rest number)
+                (rest ap)
+                (rest s)
+                (conj
+                 result
+                 {:name (first model-name)
+                  :number     (first number)
+                  :chars {:bs (first bs)}
+                  :weapons    (parse-weapons weapon-name s ap)})
+                )
+               result))})
+
+
 (defn fight [request]
-  ;; {"bs" "2+",
-  ;; "ws" "2+",
-  ;; "number" ["1" "1" "1" "1"],
-  ;; "s" ["3" "6" "4" "4"],
-  ;; "ap" ["0" "-1" "0" "-1"],
-  ;; "fname"
-  ;; ["2+" "2+" "1" "3" "0" "1" "6" "-1" "1" "4" "0" "1" "4" "-1"],
-  ;; "attacker" ["" "" ""]}
-  (clojure.pprint/pprint request)
-  (let [params (:params request)
-        model-1 {:chars {:bs (:bs params)
-                         :t "4"}
-                 :weapons [{:name "weapon"
-                            :chars {:s "20"
-                                  :ap "-"
-                                  :d "1"}}]}
-        model-2 {:chars {:t "2"
-                         :save "3+"}}
-        stats (fight/stats {:models [model-1]} {:models [model-2]})
+  (let [data (:params request)
+        defender {:name (:defender-unit-name data)
+                  :models [{:chars {:t    (:defender-toughness data)
+                                    :save (:defender-save data)}}]}
         ]
-    (println "STATS!")
-    (println stats)
-    (println (first (vals (first stats))))
-    (swap! state assoc :result-fight (json/generate-string (first (vals (first stats)))))
-    (home-page request))
+    (swap! state assoc :form-data data)
+    (swap! state assoc :multi-model (multi-models data))
+    (swap! state assoc :single-model (single-model data))
+    (swap! state assoc :defender defender)
+    (if (seq? (:bs data))
+      (swap! state assoc :result-fight (json/generate-string (fight/stats (multi-models data) defender)))
+      (swap! state assoc :result-fight (json/generate-string (fight/stats (single-model data) defender)))))
+  (home-page request))
+
+
+(comment
+
+
+  (def unit-vs-model {:defender-unit-name  "Captain",
+                      :weapon-name
+                      ["Boltgun"
+                       "Frag grenades"
+                       "Krak grenades"
+                       "Bolt pistol"
+                       "Frag grenades"
+                       "Krak grenades"
+                       "Bolt pistol"
+                       "Boltgun"],
+                      :number              ["4" "4" "4" "4" "1" "1" "1" "1"],
+                      :defender-save       "4",
+                      :attacker            ["" "" ""],
+                      :s                   ["4" "3" "6" "4" "3" "6" "4" "4"],
+                      :number-weapons      ["4" "4"],
+                      :defender-toughness  "4",
+                      :ap                  ["0" "0" "-1" "0" "0" "-1" "0" "0"],
+                      :bs                  ["3+" "3+"],
+                      :unit-name           "Tactical Squad",
+                      :defender-model-name "Captain",
+                      :model-name          ["Space Marine" "Space Marine Sergeant"]})
+
+
+
+
+  (def model-vs-unit {:defender-unit-name  "Tactical Squad",
+                      :weapon-name
+                      ["Frag grenades"
+                       "Krak grenades"
+                       "Bolt pistol"
+                       "Master-crafted boltgun"],
+                      :number              ["1" "1" "1" "1"],
+                      :defender-save       ["4" "4"],
+                      :attacker            ["" "" ""],
+                      :s                   ["3" "6" "4" "4"],
+                      :number-weapons      "4",
+                      :defender-toughness  ["4" "4"],
+                      :ap                  ["0" "-1" "0" "-1"],
+                      :bs                  "2+",
+                      :unit-name           "Captain",
+                      :defender-model-name ["Space Marine" "Space Marine Sergeant"],
+                      :model-name          "Captain"})
+
+
+  (def captain {:name "Captain",
+                :models
+                (list
+                 {:name   "Captain",
+                  :number 1,
+                  :chars
+                  {:description
+                   "While a friendly <CHAPTER> CORE unit is within 6\" of this model, each time a model in that unit makes an attack, re-roll a hit roll of 1",
+                   :ws   "2+",
+                   :ld   "9",
+                   :w    "5",
+                   :m    "6\"",
+                   :save "3+",
+                   :s    "4",
+                   :bs   "2+",
+                   :t    "4",
+                   :a    "4"},
+                  :weapons
+                  [{:name "Frag grenades",
+                    :chars
+                    {:range     "6\"",
+                     :type      "Grenade D6",
+                     :s         "3",
+                     :ap        "0",
+                     :d         "1",
+                     :abilities "Blast."},
+                    :id   0}
+                   {:name "Krak grenades",
+                    :chars
+                    {:range     "6\"",
+                     :type      "Grenade 1",
+                     :s         "6",
+                     :ap        "-1",
+                     :d         "D3",
+                     :abilities "-"},
+                    :id   1}
+                   {:name "Bolt pistol",
+                    :chars
+                    {:range     "12\"",
+                     :type      "Pistol 1",
+                     :s         "4",
+                     :ap        "0",
+                     :d         "1",
+                     :abilities "-"},
+                    :id   2}
+                   {:name "Master-crafted boltgun",
+                    :chars
+                    {:range     "24\"",
+                     :type      "Rapid Fire 1",
+                     :s         "4",
+                     :ap        "-1",
+                     :d         "2",
+                     :abilities "-"},
+                    :id   3}]}),
+                :id   0})
+
+
+
   )
 
 
@@ -119,7 +272,7 @@
   [""
    {:middleware [middleware/wrap-formats
                  middleware/wrap-base]}
-   ["/" {:get home-page
+   ["/" {:get  home-page
          :post roasters}]
    ["/select" {:post select}]
    ["/fight" {:post fight}]

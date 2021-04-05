@@ -68,7 +68,8 @@
   (for [m (xml-select/models force)]
     {:name    (attrs-name (first m))
      :models
-     (list {:number  (read-string (:number (:attrs (first m))))
+     (list {:name    (attrs-name (first m))
+            :number  (read-string (:number (:attrs (first m))))
             :chars   (characteristics  m)
             :weapons (assoc-ids (weapons m))})}))
 

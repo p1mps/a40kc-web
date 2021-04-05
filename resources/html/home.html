@@ -157,17 +157,20 @@
         {% if defender-unit %}
         <div class="col-sm">
             {{ defender-unit.name }}
+            <input type="hidden" name="defender-unit-name" value="{{defender-unit.name}}"/>
         </div>
         <div class="row">
             {% for unit in defender-unit.models %}
             <div class="col-sm-6">
                 {{ unit.name }}
-
+                <input type="hidden" name="defender-model-name" value="{{unit.name}}"/>
                 <p>
                     Toughness {{unit.chars.t}}
+                    <input type="hidden" name="defender-toughness" value="{{unit.chars.t}}"/>
                 </p>
                 <p>
-                Save {{unit.chars.s}}
+                    Save {{unit.chars.s}}
+                    <input type="hidden" name="defender-save" value="{{unit.chars.s}}"/>
                 </p>
 
             </div>
@@ -181,27 +184,27 @@
         Re roll hits:
         <select class="form-select" aria-label="Default
                        select
-                       example" name="attacker">
-            <option value={{unit.id}}>no</option>
-            <option value={{unit.id}}>1s</option>
-            <option value={{unit.id}}>all</option>
+                       example" name="hits">
+            <option value="no">no</option>
+            <option value="1s">1s</option>
+            <option value="all">all</option>
         </select>
 
         Re roll wounds:
         <select class="form-select" aria-label="Default
                        select
-                       example" name="attacker">
-            <option value={{unit.id}}>no</option>
-            <option value={{unit.id}}>1s</option>
-            <option value={{unit.id}}>all</option>
+                       example" name="wounds">
+            <option value="no">no</option>
+            <option value="1s">1s</option>
+            <option value="all">all</option>
         </select>
 
         Re roll number of shots:
         <select class="form-select" aria-label="Default
                        select
-                       example" name="attacker">
-            <option value={{unit.id}}>no</option>
-            <option value={{unit.id}}>yes</option>
+                       example" name="shots">
+            <option value="no">no</option>
+            <option value="yes">1s</option>
         </select>
 
 

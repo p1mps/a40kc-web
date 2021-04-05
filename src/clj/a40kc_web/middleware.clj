@@ -47,5 +47,4 @@
         (-> site-defaults
             (assoc-in [:security :anti-forgery] false)
             (dissoc :session)))
-      wrap-multipart-params
       wrap-internal-error))
