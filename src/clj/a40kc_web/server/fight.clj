@@ -7,24 +7,51 @@
 
 
 ;; TODO: handle grenades (either shoot or grenade)
+;; TODO: count failures
 
 ;; TODO roll d3
 
+;; D6/3D6/3D6+2
+;; nil when just "1"
+(defn parse-dice [dice]
+  (if (string/includes? dice "D")
+    (let [[times dice] (string/split dice #"D")]
+      (if (string/includes? dice "+")
+        (let [[dice add] (clojure.string/split dice #"\+")]
+          {:times (if (seq times) (Integer/parseInt times) 1)
+           :dice  (read-string dice)
+           :add   (read-string add)})
+        {:times (if (seq times) (Integer/parseInt times) 1)
+         :dice  (read-string dice)
+         :add  0}))
+    {:times 1
+     :dice  1
+     :add  0}))
+
+
+;; roll 6 3
+(defn roll [dice]
+  (cond
+    (> dice 6) 0
+    (< dice 0) 0
+    (and (>= dice 1) (<= dice 6))
+
+
+    (rand-nth (range 1 (+ 1 dice)))
+
+    ))
+
 (defn roll-dice [dice]
-  (rand-nth (range 1 (+ 1 dice))))
+  (if (or (string/includes? dice "D") (= "1" dice))
+    (let [parsed-dice (parse-dice dice)
+          add         (:add parsed-dice)
+          roll        (reduce + (take
+                          (:times parsed-dice)
+                          (repeatedly (partial roll (:dice parsed-dice)))))]
 
 
-(defn roll
-  ;; TODO handle 3D6+2
-  ([dice]
-   (if (= dice "1")
-     1
-     (when (string/includes? dice "D")
-       (let [[times dice] (string/split dice #"D")
-             dice         (Integer/parseInt dice)]
-         (if (seq times)
-           (reduce + (take (Integer/parseInt times) (repeatedly (partial roll-dice dice))))
-           (roll-dice dice)))))))
+      (+ add roll))
+    (read-string dice)))
 
 
 (defn bs [unit]
@@ -38,38 +65,84 @@
   (read-string (:t (:chars unit))))
 
 
-(defn success? [roll stat]
-  (>= roll stat))
+(defn success? [rolled stat]
+  (>= rolled stat))
 
 (defn hit? [char]
-  (success? (roll-dice 6) char))
+  (let [r (roll 6)]
+    (success? r char)))
 
+;; TODO check double strength weapon
+;; check more than double
 (defn to-wound [weapon target-unit]
-  (let [comparison (- (strength weapon) (toughness target-unit))]
-    (- 4 comparison)))
+  (let [strength (strength weapon)
+        toughness (toughness target-unit)]
+    (cond
+      (>= toughness (* 2 strength)) 6
+      (>= strength  (* 2 toughness)) 2
+      (= toughness strength) 4
+      (>= (- toughness strength) 1) 5
+      (<= (- toughness strength) -1) 3
+      )))
 
 (defn wound? [weapon target-unit]
-  (success? (roll-dice 6) (to-wound weapon target-unit)))
+  (let [r (roll 6)]
 
-(defn save? [armor-save]
-  (success? (roll-dice 6) armor-save))
+
+
+    (success? r (to-wound weapon target-unit))
+    )
+  )
+
+(defn save? [armor-to-roll]
+  (let [s (roll 6)]
+    (println armor-to-roll)
+(if (> armor-to-roll 6)
+      false
+      (>= s armor-to-roll))))
 
 (defn damage [weapon]
   (:d (:chars weapon)))
 
-(defn save [model]
-  (read-string (string/replace (:save (:chars model)) "+" "")))
+
+(defn valid-value [value]
+  (not= "-" value))
+
+(defn save [model ap]
+  ;;(read-string (string/replace (:save (:chars model)) "+" ""))
+  (if (valid-value ap)
+    (-
+     (read-string (string/replace (:save (:chars model)) "+" "") )
+     (read-string ap))
+    (read-string (string/replace (:save (:chars model)) "+" "") )))
+
+(defn shoot-succes [model1 model2 w]
+  (let [h (hit? (bs model1))
+        s (save? (save model2 (:ap (:chars w))))
+        wounded (wound? w model2)]
+    (println "========")
+
+    (when
+        (not h) (println "not hit"))
+    (when
+        s  (println "saved"))
+    (when
+        (not wounded) (println "not wound")
+        )
+
+    (and h (not s) wounded)))
+
+(> 3 5)
 
 ;; TODO: number of attacks * number of units
 (defn shoot [model1 model2]
   (for [w (:weapons model1)]
     {:weapon-name (:name w)
      :weapon-chars (:chars w)
-     :wounds      (if (and (hit? (bs model1)) (not (save? (save model2))) (wound? w model2))
-                    (let [damage (damage w)]
-                      (if (and damage (not (string/includes? damage "D")))
-                        (roll damage)
-                        1))
+     :wounds      (if (shoot-succes model1 model2 w)
+                    (let [d (roll-dice (damage w))]
+                      (println "damage" (damage w) d)
+                      d)
                     0)}))
 
 (defn monte-carlo-shoot [model1 model2 n]
@@ -82,7 +155,7 @@
            (recur (update result (:weapon-name (first s))
                           conj (:wounds (first s))) (rest s)))))
    (reduce (fn [result value]
-             (assoc result (first value) (second value))
+             (assoc result (first value) (vec (second value)))
 
              )
 
@@ -90,13 +163,31 @@
 
   )
 
+(defn assoc-weapons [stats]
+  (reduce (fn [result value]
+            (conj result (reduce (fn [r v]
+                                   (update r (first v) (comp vec concat) (second v)))
+                                 {}
+                                 value))
+
+            )
+
+          {}
+          stats
+          )
+  )
 
 
 (defn stats [unit1 unit2]
-  (vec (for [m (:models unit1)]
-         (monte-carlo-shoot m (first (:models unit2)) 1)
+  (vec (->> (for [m (:models unit1)]
+              (monte-carlo-shoot m (first (:models unit2)) 100)
 
-         ))
+              )
+            (assoc-weapons)
+
+
+
+            ))
 
 
 
@@ -123,7 +214,7 @@
 
   (shoot captain-model captain-model)
 
-  (monte-carlo-shoot captain-model squad 100)
+  (monte-carlo-shoot captain-model captain-model 1)
 
   (get-in captain [:chars])
   (bs captain)

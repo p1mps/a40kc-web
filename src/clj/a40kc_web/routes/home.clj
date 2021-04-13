@@ -9,6 +9,7 @@
 
 (def state
   (atom
+   ;; after loading
    {:attacker       {:units  nil
                      :models nil}
     :defender       {:units  nil
@@ -16,21 +17,16 @@
     ;; after select
     :attacker-unit  nil
     :defender-unit  nil
-    :attacker-model nil
-    :defender-model nil
+    ;; after fight
     :result-fight   nil}))
 
 
 (defn home-page [request]
   (layout/render request "home.html"
-                 {:attacker-models (:models (:attacker @state))
-                  :defender-models (:models (:defender @state))
-                  :attacker-units  (:units (:attacker @state))
+                 {:attacker-units  (:units (:attacker @state))
                   :defender-units  (:units (:defender @state))
                   :attacker-unit   (:attacker-unit @state)
                   :defender-unit   (:defender-unit @state)
-                  :attacker-model  (:attacker-model @state)
-                  :defender-model  (:defender-model @state)
                   :result-fight    (:result-fight @state)}))
 
 
@@ -53,71 +49,39 @@
       (swap! state assoc :defender defender))
     (home-page request)))
 
-(defn parse-id [id]
-  (if (clojure.string/includes? id "unit")
-    {:unit true
-     :id   (clojure.string/replace id #"unit-" "")}
-    {:unit false
-     :id   (clojure.string/replace id #"model-" "")}))
-
-
 (defn select [request]
-  (let [attacker-id (parse-id (get-in request [:params :attacker]))
-        defender-id (parse-id (get-in request [:params :defender]))]
-    (if (:unit attacker-id)
-      (do
-        (swap! state assoc :attacker-unit (first (filter #(= (str (:id %)) (:id attacker-id)) (:units (:attacker @state)))))
-        (swap! state assoc :attacker-model nil))
-      (do
-        (swap! state assoc :attacker-model (first (filter #(= (str (:id %)) (:id attacker-id)) (:models (:attacker @state)))))
-        (swap! state assoc :attacker-unit nil)))
-    (if (:unit defender-id)
-      (do
-        (swap! state assoc :defender-unit (first (filter #(= (str (:id %)) (:id defender-id)) (:units (:defender @state)))))
-        (swap! state assoc :defender-model nil))
-      (do
-        (swap! state assoc :defender-model (first (filter #(= (str (:id %)) (:id defender-id)) (:models (:defender @state)))))
-        (swap! state assoc :defender-unit nil)))
-
-
+  (let [attacker-id (Integer/parseInt (get-in request [:params :attacker-selected]))
+        defender-id (Integer/parseInt (get-in request [:params :defender-selected]))]
+    (swap! state assoc :attacker-unit (first (filter #(= (:id %) attacker-id) (:units (:attacker @state)))))
+    (swap! state assoc :defender-unit (first (filter #(= (:id %) defender-id) (:units (:defender @state)))))
     (home-page request)))
 
-(defn reset [request]
+(defn reset [_]
   (reset! state nil)
   (response/redirect "/" 301))
 
 
-(defn parse-weapons [{:keys [weapon-name ap s]}]
-  (for [name weapon-name
-        s    s
-        ap   ap]
-    {:name  name
-     :chars {:s  s
-             :ap ap}}))
-
-(defn parse-weapons [weapon-names s ap]
+(defn parse-weapons [weapon-names s ap d]
   (loop [weapon weapon-names
          s      s
          ap     ap
+         d     d
          result []]
     (if (seq weapon)
-      (recur (rest weapon) (rest s) (rest ap) (conj result {:name  (first weapon)
-                                                            :chars {:s  (first s)
-                                                                    :ap (first ap)}}))
+      (recur (rest weapon) (rest s) (rest ap) (rest d) (conj result {:name  (first weapon)
+                                                                      :chars {:s  (first s)
+                                                                              :d (first d)
+                                                                      :ap (first ap)}}))
       result)))
 
-
-
-
-
-(defn single-model [{:keys [model-name bs weapon-name number ap s]}]
+(defn single-model [{:keys [model-name bs weapon-name number ap s d]}]
   {:name   model-name
    :models [{:name model-name
              :number number
              :chars {:bs bs}
-             :weapons (parse-weapons weapon-name s ap)}]})
+             :weapons (parse-weapons weapon-name s ap d)}]})
 
-(defn multi-models [{:keys [unit-name model-name bs weapon-name number ap s]}]
+(defn multi-models [{:keys [unit-name model-name bs weapon-name number ap s d]}]
   {:name unit-name
    :models (loop [model-name  model-name
                   bs          bs
@@ -125,6 +89,7 @@
                   number      number
                   ap          ap
                   s           s
+                  d           d
                   result      []]
              (if (seq model-name)
                (recur
@@ -134,29 +99,43 @@
                 (rest number)
                 (rest ap)
                 (rest s)
+                (rest d)
                 (conj
                  result
                  {:name (first model-name)
                   :number     (first number)
                   :chars {:bs (first bs)}
-                  :weapons    (parse-weapons weapon-name s ap)})
+                  :weapons    (parse-weapons weapon-name s ap d)})
                 )
                result))})
 
+(defn get-defender [request]
+  (let [data (:params request)]
+    (if (vector? (:defender-toughness data))
+      {:name (:defender-unit-name data)
+       :models [{:chars {:t    (first (:defender-toughness data))
+                         :save (first (:defender-save data))}}]}
+      {:name   (:defender-unit-name data)
+       :models [{:chars {:t    (:defender-toughness data)
+                         :save (:defender-save data)}}]}
+      )
 
+
+    ))
+
+
+
+;; TODO after fight reload defender-unit from form data
 (defn fight [request]
   (let [data (:params request)
-        defender {:name (:defender-unit-name data)
-                  :models [{:chars {:t    (:defender-toughness data)
-                                    :save (:defender-save data)}}]}
-        ]
+        defender-model (get-defender request)]
     (swap! state assoc :form-data data)
     (swap! state assoc :multi-model (multi-models data))
     (swap! state assoc :single-model (single-model data))
-    (swap! state assoc :defender defender)
-    (if (seq? (:bs data))
-      (swap! state assoc :result-fight (json/generate-string (fight/stats (multi-models data) defender)))
-      (swap! state assoc :result-fight (json/generate-string (fight/stats (single-model data) defender)))))
+    (swap! state assoc :defender-model defender-model)
+    (if (vector? (:bs data))
+      (swap! state assoc :result-fight (fight/stats (multi-models data) defender-model))
+      (swap! state assoc :result-fight (fight/stats (single-model data) defender-model))))
   (home-page request))
 
 

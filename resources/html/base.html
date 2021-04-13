@@ -1,72 +1,92 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to a40kc-web</title>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Welcome to a40kc-web</title>
 
-    <!-- styles -->
-    {% style "/assets/bulma/css/bulma.min.css" %}
-    {% style "/assets/material-icons/css/material-icons.min.css" %}
+        <!-- styles -->
+        {% style "/assets/bulma/css/bulma.min.css" %}
+        {% style "/assets/material-icons/css/material-icons.min.css" %}
 
-    {% style "/css/screen.css" %}
+        {% style "/css/screen.css" %}
 
-    <!-- bootstrap -->
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <!-- bootstrap -->
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  </head>
-  <body>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    </head>
+    <body>
 
-      <section class="section">
-          <div class="container">
-              {% block content %}
-              {% endblock %}
-          </div>
-      </section>
-      {{result-fight}}
-      <!-- scripts -->
-      <script type="text/javascript">
-       var layout = {
-           width: 500,
-           height: 500,
-           xaxis: {
+        <section class="section">
+            <div class="container">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </section>
 
-               tickformat: ",d" // For more formatting types, see: https://github.com/d3/d3-format/blob/master/README.md#locale_format
-           },
-           yaxis: {
-               'visible': false,
-               tickformat: ",d" // For more formatting types, see: https://github.com/d3/d3-format/blob/master/README.md#locale_format
-           }
-       };
-
-       var config = {responsive: true}
-
-       var x = {{result-fight}}
-
-       var trace = {
-           x: x,
-           type: 'histogram',
-       };
-       var data = [trace];
-       console.log(data);
-       Plotly.newPlot('tester', data, layout, config);
+        <!-- scripts -->
 
 
-      </script>
+        {% for result in result-fight %}
+
+        <div class="col-sm-3">
+            <div id="{{result|first}}">
+                <p class="text-center">
+                    {{result|first}}
+            </div>
+
+            </div>
+
+        </div>
 
 
 
-    {% block page-scripts %}
-    {% endblock %}
-  </body>
+            <script type="text/javascript">
+
+             var layout = {
+                 width: 500,
+                 height: 500,
+                 bargap: 0.2,
+                 xaxis: {
+
+                     tickformat: ",d" // For more formatting types, see: https://github.com/d3/d3-format/blob/master/README.md#locale_format
+                 },
+                 yaxis: {
+
+                     tickformat: ",d" // For more formatting types, see: https://github.com/d3/d3-format/blob/master/README.md#locale_format
+                 }
+             };
+
+             var config = {responsive: true};
+
+             var trace = {
+                 x: {{result|last|json}},
+                 type: 'histogram',
+
+                 xbins: {size: 1},
+
+             };
+             var data = [trace];
+             console.log(data);
+             Plotly.newPlot('{{result|first}}', data, layout, config);
+
+
+            </script>
+
+            {% endfor %}
+        </div>
+
+        {% block page-scripts %}
+        {% endblock %}
+    </body>
 </html>
